@@ -1,0 +1,103 @@
+// DevRoad — Prisma Schema
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── User ──────────────────────────────────────────────────────
+// Simplified user model (no auth provider yet — can extend with NextAuth later)
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  createdAt DateTime  @default(now())
+  roadmaps  Roadmap[]
+}
+
+// ── Roadmap ───────────────────────────────────────────────────
+// A learning roadmap is a collection of ordered steps toward a goal.
+// completedSteps / totalSteps are denormalized for fast dashboard queries.
+model Roadmap {
+  id             String        @id @default(cuid())
+  userId         String
+  title          String
+  description    String?
+  totalSteps     Int           @default(0)
+  completedSteps Int           @default(0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  steps          Step[]
+  progressLogs   ProgressLog[]
+
+  @@index([userId])
+}
+
+// ── Step ──────────────────────────────────────────────────────
+// A discrete learning unit within a roadmap.
+// progressHours is updated whenever a ProgressLog is added.
+// completionPercentage = (progressHours / estimatedHours) * 100
+model Step {
+  id                   String        @id @default(cuid())
+  roadmapId            String
+  title                String
+  description          String?
+  orderIndex           Int           @default(0)
+  estimatedHours       Float         @default(0)
+  progressHours        Float         @default(0)
+  completionPercentage Float         @default(0)
+  isCompleted          Boolean       @default(false)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  roadmap              Roadmap       @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+  videos               Video[]
+  progressLogs         ProgressLog[]
+
+  @@index([roadmapId])
+}
+
+// ── Video ─────────────────────────────────────────────────────
+// A YouTube tutorial attached to a step.
+// watchedSeconds enables resume-playback: the embed URL is built with
+// ?start=watchedSeconds so playback resumes exactly where the user left off.
+model Video {
+  id                   String   @id @default(cuid())
+  stepId               String
+  title                String
+  youtubeUrl           String
+  thumbnailUrl         String?
+  durationSeconds      Int      @default(0)
+  watchedSeconds       Int      @default(0)
+  completionPercentage Float    @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  step                 Step     @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@index([stepId])
+}
+
+// ── ProgressLog ───────────────────────────────────────────────
+// Immutable log entries — each represents one study session.
+// These are aggregated to compute step & roadmap progress.
+// The streak system queries this table to find consecutive days.
+model ProgressLog {
+  id         String   @id @default(cuid())
+  roadmapId  String
+  stepId     String
+  timeSpent  Float    // hours studied in this session
+  date       DateTime @default(now()) // UTC date of the session
+  notes      String?
+  createdAt  DateTime @default(now())
+  roadmap    Roadmap  @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+  step       Step     @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@index([roadmapId])
+  @@index([stepId])
+  @@index([date])
+}
+
