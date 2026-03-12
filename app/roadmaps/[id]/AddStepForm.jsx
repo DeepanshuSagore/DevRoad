@@ -21,7 +21,6 @@ export default function AddStepForm({ roadmapId }) {
   const [form, setForm] = useState({
     title: "",
     description: "",
-    estimatedHours: "",
   });
 
   function handleChange(e) {
@@ -41,7 +40,7 @@ export default function AddStepForm({ roadmapId }) {
       const res = await fetch(`/api/roadmaps/${roadmapId}/steps`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ title: form.title, description: form.description, estimatedHours: 0 }),
       });
 
       if (!res.ok) {
@@ -49,7 +48,7 @@ export default function AddStepForm({ roadmapId }) {
         throw new Error(data.error || "Failed to add step");
       }
 
-      setForm({ title: "", description: "", estimatedHours: "" });
+      setForm({ title: "", description: "" });
       setOpen(false);
       // Refresh the server component data
       router.refresh();
@@ -100,19 +99,9 @@ export default function AddStepForm({ roadmapId }) {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="step-hours">Estimated Hours</Label>
-            <Input
-              id="step-hours"
-              name="estimatedHours"
-              type="number"
-              min="0"
-              step="0.5"
-              placeholder="e.g. 10"
-              value={form.estimatedHours}
-              onChange={handleChange}
-            />
-          </div>
+          <p className="text-xs text-muted-foreground">
+            Estimated duration will be calculated automatically once you add videos to this step.
+          </p>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 

@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { calcPercent } from "@/lib/utils";
+import { calcPercent, formatHours } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -84,7 +84,7 @@ export default async function RoadmapDetailPage({ params }) {
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-foreground">
-                {totalHours.toFixed(1)}h
+                {formatHours(totalHours)}
               </p>
               <p className="text-xs text-muted-foreground">Studied</p>
             </div>

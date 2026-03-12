@@ -5,6 +5,7 @@ import { computeStreak, getTodayStudyHours } from "@/lib/streak";
 import { Card, CardContent } from "@/components/ui/card";
 import StreakCounter from "@/components/StreakCounter";
 import { BookOpen, Clock, TrendingUp } from "lucide-react";
+import { formatHours } from "@/lib/utils";
 
 const TEMP_USER_ID = "user_default";
 
@@ -66,7 +67,7 @@ export default async function ProgressPage() {
               <Clock className="h-4 w-4 text-blue-400" />
               <span className="text-xs text-muted-foreground">Today</span>
             </div>
-            <p className="text-2xl font-bold">{todayHours.toFixed(1)}h</p>
+            <p className="text-2xl font-bold">{formatHours(todayHours)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -75,7 +76,7 @@ export default async function ProgressPage() {
               <TrendingUp className="h-4 w-4 text-emerald-400" />
               <span className="text-xs text-muted-foreground">Total Logged</span>
             </div>
-            <p className="text-2xl font-bold">{totalHoursLogged.toFixed(1)}h</p>
+            <p className="text-2xl font-bold">{formatHours(totalHoursLogged)}</p>
           </CardContent>
         </Card>
         <div className="col-span-2 md:col-span-1">
@@ -104,7 +105,7 @@ export default async function ProgressPage() {
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-sm font-semibold text-foreground">{date}</h2>
                   <span className="text-xs text-muted-foreground">
-                    {dayTotal.toFixed(1)}h total
+                    {formatHours(dayTotal)} total
                   </span>
                 </div>
                 <div className="space-y-2">
@@ -131,7 +132,7 @@ export default async function ProgressPage() {
                       </div>
                       <div className="text-right shrink-0">
                         <p className="text-sm font-bold text-foreground">
-                          +{log.timeSpent}h
+                          +{formatHours(log.timeSpent)}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {new Date(log.date).toLocaleTimeString([], {

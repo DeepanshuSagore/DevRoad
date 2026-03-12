@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { calcPercent, formatDuration } from "@/lib/utils";
+import { calcPercent, formatDuration, formatHours } from "@/lib/utils";
 import { Pencil, Trash2, ArrowRight, Clock, PlayCircle } from "lucide-react";
 import { useState } from "react";
 
@@ -108,7 +108,7 @@ export default function StepCard({ step, roadmapId, onDelete }) {
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              {step.progressHours}h / {step.estimatedHours}h
+              {formatHours(step.progressHours)} / {formatHours(step.estimatedHours)}
             </span>
             {step._count?.videos > 0 && (
               <span className="flex items-center gap-1">

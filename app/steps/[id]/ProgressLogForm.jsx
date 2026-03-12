@@ -14,12 +14,12 @@ import { Loader2, Clock } from "lucide-react";
  * After saving, router.refresh() re-fetches the server component
  * so step progress and stats update immediately.
  */
-export default function ProgressLogForm({ stepId, roadmapId, stepTitle }) {
+export default function ProgressLogForm({ stepId, roadmapId, stepTitle, onSuccess }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({ timeSpent: "", notes: "" });
+  const [form, setForm] = useState({ hours: "", minutes: "", notes: "" });
 
   function handleChange(e) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -29,9 +29,11 @@ export default function ProgressLogForm({ stepId, roadmapId, stepTitle }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const hours = parseFloat(form.timeSpent);
-    if (!form.timeSpent || isNaN(hours) || hours <= 0) {
-      setError("Please enter a valid number of hours (e.g. 1.5).");
+    const hrs = parseInt(form.hours) || 0;
+    const mins = parseInt(form.minutes) || 0;
+    const totalHours = hrs + mins / 60;
+    if (totalHours <= 0) {
+      setError("Please enter at least 1 minute of study time.");
       return;
     }
 
@@ -43,7 +45,7 @@ export default function ProgressLogForm({ stepId, roadmapId, stepTitle }) {
         body: JSON.stringify({
           stepId,
           roadmapId,
-          timeSpent: hours,
+          timeSpent: totalHours,
           notes: form.notes,
         }),
       });
@@ -53,10 +55,12 @@ export default function ProgressLogForm({ stepId, roadmapId, stepTitle }) {
         throw new Error(data.error || "Failed to log progress");
       }
 
-      setForm({ timeSpent: "", notes: "" });
+      setForm({ hours: "", minutes: "", notes: "" });
       setSuccess(true);
       // Refresh server component to show updated progress
       router.refresh();
+      // Collapse the log panel if a callback was provided
+      onSuccess?.();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -69,22 +73,38 @@ export default function ProgressLogForm({ stepId, roadmapId, stepTitle }) {
       <CardContent className="p-5">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="time-spent">
-              Hours studied on &quot;{stepTitle}&quot; *
+            <Label>
+              Time studied on &quot;{stepTitle}&quot; *
             </Label>
-            <div className="relative">
-              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="time-spent"
-                name="timeSpent"
-                type="number"
-                min="0.1"
-                step="0.25"
-                placeholder="e.g. 1.5"
-                value={form.timeSpent}
-                onChange={handleChange}
-                className="pl-9"
-              />
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="time-hours"
+                  name="hours"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={form.hours}
+                  onChange={handleChange}
+                  className="pl-9 pr-10"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">hrs</span>
+              </div>
+              <div className="relative flex-1">
+                <Input
+                  id="time-minutes"
+                  name="minutes"
+                  type="number"
+                  min="0"
+                  max="59"
+                  placeholder="0"
+                  value={form.minutes}
+                  onChange={handleChange}
+                  className="pr-10"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">min</span>
+              </div>
             </div>
             <p className="text-xs text-muted-foreground">
               This will update your step completion and streak.

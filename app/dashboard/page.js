@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { computeStreak, getTodayStudyHours } from "@/lib/streak";
-import { calcPercent, formatDuration } from "@/lib/utils";
+import { calcPercent, formatDuration, formatHours } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -92,7 +92,7 @@ export default async function DashboardPage() {
         <StatCard
           icon={<Clock className="h-4 w-4 text-blue-400" />}
           label="Studied Today"
-          value={`${todayHours.toFixed(1)}h`}
+          value={formatHours(todayHours)}
         />
         <div className="col-span-1">
           <StreakCounter
@@ -181,7 +181,7 @@ export default async function DashboardPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold text-foreground">
-                    +{log.timeSpent}h
+                    +{formatHours(log.timeSpent)}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {new Date(log.date).toLocaleDateString()}

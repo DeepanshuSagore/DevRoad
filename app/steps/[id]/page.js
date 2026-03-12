@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { calcPercent, formatDuration } from "@/lib/utils";
+import { calcPercent, formatDuration, formatHours } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Clock, CheckCircle2 } from "lucide-react";
 import VideoSection from "./VideoSection";
-import ProgressLogForm from "./ProgressLogForm";
 import MarkCompleteButton from "./MarkCompleteButton";
 
 /**
@@ -83,11 +82,11 @@ export default async function StepDetailPage({ params }) {
               <p className="text-xs text-muted-foreground">Complete</p>
             </div>
             <div className="text-center">
-              <p className="text-xl font-bold">{step.progressHours.toFixed(1)}h</p>
+              <p className="text-xl font-bold">{formatHours(step.progressHours)}</p>
               <p className="text-xs text-muted-foreground">Studied</p>
             </div>
             <div className="text-center">
-              <p className="text-xl font-bold">{step.estimatedHours}h</p>
+              <p className="text-xl font-bold">{formatHours(step.estimatedHours)}</p>
               <p className="text-xs text-muted-foreground">Estimated</p>
             </div>
           </div>
@@ -102,18 +101,6 @@ export default async function StepDetailPage({ params }) {
         initialVideos={step.videos}
         roadmapId={step.roadmap.id}
       />
-
-      {/* Log progress */}
-      <section>
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Log Study Time
-        </h2>
-        <ProgressLogForm
-          stepId={id}
-          roadmapId={step.roadmap.id}
-          stepTitle={step.title}
-        />
-      </section>
     </div>
   );
 }
