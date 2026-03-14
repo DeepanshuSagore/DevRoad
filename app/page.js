@@ -11,21 +11,39 @@ import { CheckCircle2, Circle, Lock, Plus, ArrowRight } from "lucide-react";
 const TEMP_USER_ID = "user_default";
 
 export default async function Home() {
-  // Ensure user exists
-  await prisma.user.upsert({
-    where: { id: TEMP_USER_ID },
-    update: {},
-    create: { id: TEMP_USER_ID, email: "dev@devroad.local", name: "Developer" },
-  });
+  let roadmap = null;
 
-  // Fetch the most recently updated roadmap with its ordered steps
-  const roadmap = await prisma.roadmap.findFirst({
-    where: { userId: TEMP_USER_ID },
-    orderBy: { updatedAt: "desc" },
-    include: {
-      steps: { orderBy: { orderIndex: "asc" } },
-    },
-  });
+  try {
+    // Ensure user exists
+    await prisma.user.upsert({
+      where: { id: TEMP_USER_ID },
+      update: {},
+      create: { id: TEMP_USER_ID, email: "dev@devroad.local", name: "Developer" },
+    });
+
+    // Fetch the most recently updated roadmap with its ordered steps
+    roadmap = await prisma.roadmap.findFirst({
+      where: { userId: TEMP_USER_ID },
+      orderBy: { updatedAt: "desc" },
+      include: {
+        steps: { orderBy: { orderIndex: "asc" } },
+      },
+    });
+  } catch (error) {
+    console.error("Home page data fetch failed", error);
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center gap-6 px-4">
+        <div className="space-y-2 max-w-xl">
+          <h1 className="text-2xl font-bold text-foreground">Database connection issue</h1>
+          <p className="text-muted-foreground text-sm">
+            The app is deployed, but the server could not connect to PostgreSQL. Verify
+            <span className="font-medium"> DATABASE_URL </span>
+            in Vercel and redeploy.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!roadmap) {
     return (
