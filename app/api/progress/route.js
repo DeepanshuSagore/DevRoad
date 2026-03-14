@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 const TEMP_USER_ID = "user_default";
 
 // GET /api/progress — recent progress logs
 export async function GET(request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get("limit") || "20");
+    // Guard against build-time invocation where request metadata can be unavailable.
+    const searchParams = request?.nextUrl?.searchParams ?? new URL(request?.url ?? "http://localhost").searchParams;
+    const parsedLimit = parseInt(searchParams.get("limit") || "20", 10);
+    const limit = Number.isNaN(parsedLimit) ? 20 : Math.max(1, Math.min(parsedLimit, 200));
     const roadmapId = searchParams.get("roadmapId");
 
     const roadmaps = await prisma.roadmap.findMany({
