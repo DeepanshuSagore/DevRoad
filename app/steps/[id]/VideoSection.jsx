@@ -18,6 +18,7 @@ import {
   ClipboardList,
   Clock,
   Pencil,
+  CheckCircle2,
 } from "lucide-react";
 
 /**
@@ -214,6 +215,7 @@ export default function VideoSection({ stepId, initialVideos, roadmapId }) {
 }
 
 function VideoCard({ video, stepId, roadmapId, onDelete, onProgressSave, onUpdate }) {
+  const router = useRouter();
   const ytId = extractYouTubeId(video.youtubeUrl);
 
   const watchPercent =
@@ -226,6 +228,8 @@ function VideoCard({ video, stepId, roadmapId, onDelete, onProgressSave, onUpdat
   const [logForm, setLogForm] = useState({ hours: "", minutes: "", notes: "" });
   const [logLoading, setLogLoading] = useState(false);
   const [logError, setLogError] = useState("");
+  const [doneLoading, setDoneLoading] = useState(false);
+  const [doneError, setDoneError] = useState("");
 
   // Edit video state
   const [editOpen, setEditOpen] = useState(false);
@@ -322,6 +326,55 @@ function VideoCard({ video, stepId, roadmapId, onDelete, onProgressSave, onUpdat
     }
   }
 
+  async function handleMarkDone() {
+    if (doneLoading || watchPercent >= 100 || video.durationSeconds <= 0) return;
+
+    setDoneLoading(true);
+    setDoneError("");
+
+    try {
+      const remainingSeconds = Math.max(video.durationSeconds - video.watchedSeconds, 0);
+
+      if (remainingSeconds > 0) {
+        const progressRes = await fetch("/api/progress", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            stepId,
+            roadmapId,
+            timeSpent: remainingSeconds / 3600,
+            notes: `Marked video as done: ${video.title}`,
+          }),
+        });
+
+        if (!progressRes.ok) {
+          const data = await progressRes.json();
+          throw new Error(data.error || "Failed to log completion");
+        }
+      }
+
+      const newWatched = video.durationSeconds;
+      const patchRes = await fetch(`/api/videos/${video.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ watchedSeconds: newWatched, completionPercentage: 100 }),
+      });
+
+      if (!patchRes.ok) {
+        const data = await patchRes.json();
+        throw new Error(data.error || "Failed to mark video done");
+      }
+
+      onProgressSave({ watchedSeconds: newWatched, completionPercentage: 100 });
+      setLogOpen(false);
+      router.refresh();
+    } catch (err) {
+      setDoneError(err.message);
+    } finally {
+      setDoneLoading(false);
+    }
+  }
+
   return (
     <Card className="overflow-hidden flex flex-col group">
       {/* Main row: thumbnail | info | actions */}
@@ -390,6 +443,16 @@ function VideoCard({ video, stepId, roadmapId, onDelete, onProgressSave, onUpdat
             <ClipboardList className="h-4 w-4" />
             Log
           </Button>
+          <Button
+            variant="outline"
+            className="gap-2 w-full border-emerald-500 text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-400"
+            onClick={handleMarkDone}
+            disabled={doneLoading || watchPercent >= 100 || video.durationSeconds <= 0}
+          >
+            {doneLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+            Done
+          </Button>
+          {doneError && <p className="text-xs text-destructive text-center">{doneError}</p>}
           <div className="flex gap-1 justify-center mt-1">
             <button
               onClick={() => {
