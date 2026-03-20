@@ -3,13 +3,13 @@ export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { calcPercent, formatDuration, formatHours } from "@/lib/utils";
+import { calcPercent, formatHours } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Clock, CheckCircle2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import VideoSection from "./VideoSection";
 import MarkCompleteButton from "./MarkCompleteButton";
 
@@ -33,6 +33,15 @@ export default async function StepDetailPage({ params }) {
   });
 
   if (!step) notFound();
+
+  const nextStep = await prisma.step.findFirst({
+    where: {
+      roadmapId: step.roadmapId,
+      orderIndex: { gt: step.orderIndex },
+    },
+    orderBy: { orderIndex: "asc" },
+    select: { id: true },
+  });
 
   const percent = step.isCompleted
     ? 100
@@ -70,7 +79,17 @@ export default async function StepDetailPage({ params }) {
                 <p className="text-sm text-muted-foreground mt-1">{step.description}</p>
               )}
             </div>
-            <MarkCompleteButton stepId={id} isCompleted={step.isCompleted} />
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <MarkCompleteButton stepId={id} isCompleted={step.isCompleted} />
+              {step.isCompleted && nextStep && (
+                <Button asChild size="sm" className="gap-2">
+                  <Link href={`/steps/${nextStep.id}`}>
+                    Move to Next Step
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
 
           <Separator className="my-4" />
